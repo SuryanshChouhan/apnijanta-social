@@ -1,20 +1,47 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# Apnijanta Social - Empowering Students
 
-# Run and deploy your AI Studio app
+Apnijanta is a student-powered platform that helps students in India fight unfair policies, recover fees, protect housing rights, and hold universities accountable. 
 
-This contains everything you need to run your app locally.
+This repository contains the complete Next.js (App Router) codebase for the Apnijanta social platform, which features a directory of colleges, a legal rights blog, and a support case tracking system.
 
-View your app in AI Studio: https://ai.studio/apps/8b5f0ed3-a4a8-4783-b9e9-f7ac0990f8fa
+## Tech Stack
+- **Framework:** Next.js 15 (App Router, Turbopack)
+- **Styling:** Tailwind CSS v4 & Lucide React
+- **Database:** PostgreSQL (via `pg`)
+- **State Management:** React Context API
 
-## Run Locally
+## Local Development Setup
 
-**Prerequisites:**  Node.js
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/SuryanshChouhan/apnijanta-social.git
+   cd apnijanta-social
+   ```
 
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+3. **Database Configuration**
+   Ensure you have PostgreSQL running. Create a database (e.g. `apnijanta`) and configure your connection string in `.env`:
+   ```env
+   DATABASE_URL="postgresql://postgres:password@localhost:5432/apnijanta"
+   ```
+
+4. **Initialize Database Tables**
+   Run the SQL statements found in `server/init-db.js` against your PostgreSQL database to set up the necessary tables (`colleges`, `blogs`, `cases`, `reviews`).
+
+5. **Start the Development Server**
+   ```bash
+   npm run dev
+   ```
+   The site will be available at `http://localhost:3000`.
+
+## Production Deployment
+The application is fully optimized for production deployment on platforms like Vercel, Netlify, or any Node.js hosting service.
+
+```bash
+npm run build
+npm run start
+```

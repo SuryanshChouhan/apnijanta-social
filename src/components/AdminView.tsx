@@ -83,6 +83,30 @@ export default function AdminView() {
     setIsEditingBlog(true);
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0 || !editingBlog) return;
+    const file = e.target.files[0];
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success) {
+        setEditingBlog({ ...editingBlog, image: data.url });
+      } else {
+        alert('Upload failed: ' + data.error);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error uploading image');
+    }
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center pt-20 px-4">
@@ -228,8 +252,14 @@ export default function AdminView() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block mb-2">Image URL</label>
-                  <input required type="text" value={editingBlog.image} onChange={e => setEditingBlog({...editingBlog, image: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 focus:outline-none focus:border-slate-900 text-sm" placeholder="https://..." />
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block mb-2">Image URL or Upload</label>
+                  <div className="flex gap-2">
+                    <input type="text" value={editingBlog.image} onChange={e => setEditingBlog({...editingBlog, image: e.target.value})} className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-300 focus:outline-none focus:border-slate-900 text-sm" placeholder="https://..." />
+                    <label className="px-4 py-2.5 bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center cursor-pointer hover:bg-slate-300 transition-colors whitespace-nowrap">
+                      Upload Image
+                      <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                    </label>
+                  </div>
                 </div>
                 <div>
                   <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block mb-2">Author Name</label>
