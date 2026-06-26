@@ -13,13 +13,22 @@ export async function GET() {
       id: r.id,
       name: r.name,
       location: r.location,
-      type: r.type,
-      transparencyScore: r.transparency_score,
-      flags: JSON.parse(r.flags),
-      stats: JSON.parse(r.stats),
-      knownIssues: JSON.parse(r.known_issues),
-      verifiedScams: JSON.parse(r.verified_scams),
-      feeStructure: JSON.parse(r.fee_structure)
+      state: r.state,
+      collegeType: r.college_type,
+      approvalStatus: r.approval_status,
+      logoText: r.logo_text,
+      approvedTuition: r.approved_tuition,
+      reportedTotalAsk: r.reported_total_ask,
+      tuition: r.tuition,
+      placementRate: r.placement_rate,
+      rating: r.rating,
+      image: r.image,
+      tags: typeof r.tags === 'string' ? JSON.parse(r.tags) : r.tags,
+      description: r.description,
+      transparencyScore: typeof r.transparency_score === 'string' ? JSON.parse(r.transparency_score) : r.transparency_score,
+      capitationReports: r.capitation_reports,
+      marksheetComplaints: r.marksheet_complaints,
+      grievanceOfficerListed: r.grievance_officer_listed
     }));
     return NextResponse.json(colleges);
   } catch (err) {
@@ -31,17 +40,35 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const c = await req.json();
+    
+    // Ensure tags and transparencyScore are stringified for JSONB insertion
+    const tagsJson = JSON.stringify(c.tags || []);
+    const transparencyScoreJson = JSON.stringify(c.transparencyScore || {});
+
     await pool.query(
-      `INSERT INTO colleges (id, name, location, type, transparency_score, flags, stats, known_issues, verified_scams, fee_structure) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-       ON CONFLICT (id) DO UPDATE SET 
-         name = $2, location = $3, type = $4, transparency_score = $5, flags = $6, stats = $7, 
-         known_issues = $8, verified_scams = $9, fee_structure = $10`,
-      [c.id, c.name, c.location, c.type, c.transparencyScore, JSON.stringify(c.flags), JSON.stringify(c.stats), JSON.stringify(c.knownIssues), JSON.stringify(c.verifiedScams), JSON.stringify(c.feeStructure)]
+      `INSERT INTO colleges (
+        id, name, location, state, college_type, approval_status, logo_text, 
+        approved_tuition, reported_total_ask, tuition, placement_rate, rating, 
+        image, tags, description, transparency_score, capitation_reports, 
+        marksheet_complaints, grievance_officer_listed
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19
+      ) ON CONFLICT (id) DO UPDATE SET 
+        name = $2, location = $3, state = $4, college_type = $5, approval_status = $6, 
+        logo_text = $7, approved_tuition = $8, reported_total_ask = $9, tuition = $10, 
+        placement_rate = $11, rating = $12, image = $13, tags = $14, description = $15, 
+        transparency_score = $16, capitation_reports = $17, marksheet_complaints = $18, 
+        grievance_officer_listed = $19`,
+      [
+        c.id, c.name, c.location, c.state, c.collegeType, c.approvalStatus, c.logoText,
+        c.approvedTuition, c.reportedTotalAsk, c.tuition, c.placementRate, c.rating,
+        c.image, tagsJson, c.description, transparencyScoreJson, c.capitationReports,
+        c.marksheetComplaints, c.grievanceOfficerListed
+      ]
     );
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error(err);
+    console.error('Error saving college:', err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }

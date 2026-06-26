@@ -18,6 +18,9 @@ export default function AdminView() {
   const [editingBlog, setEditingBlog] = useState<BlogPost | null>(null);
   const [isEditingBlog, setIsEditingBlog] = useState(false);
 
+  const [editingCollege, setEditingCollege] = useState<College | null>(null);
+  const [isEditingCollege, setIsEditingCollege] = useState(false);
+
   // Authentication
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,6 +101,98 @@ export default function AdminView() {
       const data = await res.json();
       if (data.success) {
         setEditingBlog({ ...editingBlog, image: data.url });
+      } else {
+        alert('Upload failed: ' + data.error);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error uploading image');
+    }
+  };
+
+  // College Handlers
+  const handleSaveCollege = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCollege) return;
+    
+    try {
+      await fetch('/api/colleges', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editingCollege)
+      });
+      
+      const isNew = !collegeList.find(c => c.id === editingCollege.id);
+      if (isNew) {
+        setCollegeList([...collegeList, editingCollege]);
+      } else {
+        setCollegeList(collegeList.map(c => c.id === editingCollege.id ? editingCollege : c));
+      }
+      setIsEditingCollege(false);
+      setEditingCollege(null);
+    } catch (err) {
+      console.error(err);
+      alert('Error saving college');
+    }
+  };
+
+  const handleDeleteCollege = async (id: string) => {
+    if (confirm('Are you sure you want to delete this college?')) {
+      try {
+        await fetch(`/api/colleges/${id}`, { method: 'DELETE' });
+        setCollegeList(collegeList.filter(c => c.id !== id));
+      } catch (err) {
+        console.error(err);
+        alert('Error deleting college');
+      }
+    }
+  };
+
+  const startNewCollege = () => {
+    setEditingCollege({
+      id: `college-${Date.now()}`,
+      name: '',
+      location: '',
+      state: '',
+      collegeType: 'Private',
+      approvalStatus: 'Approved',
+      logoText: '',
+      approvedTuition: 0,
+      reportedTotalAsk: 0,
+      tuition: '',
+      placementRate: 0,
+      rating: 0,
+      image: '',
+      tags: [],
+      description: '',
+      transparencyScore: {
+        feeStructurePublished: 0,
+        grievanceResponseRate: 0,
+        documentReleaseRecord: 0,
+        capitationComplaintHistory: 0,
+        total: 0
+      },
+      capitationReports: 0,
+      marksheetComplaints: 0,
+      grievanceOfficerListed: false
+    });
+    setIsEditingCollege(true);
+  };
+
+  const handleCollegeImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0 || !editingCollege) return;
+    const file = e.target.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success) {
+        setEditingCollege({ ...editingCollege, image: data.url });
       } else {
         alert('Upload failed: ' + data.error);
       }
@@ -290,40 +385,149 @@ export default function AdminView() {
           </div>
         )}
 
-        {/* Colleges Tab (Basic implementation for MVP) */}
+        {/* Colleges Tab */}
         {activeTab === 'colleges' && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <h1 className="text-3xl font-black text-slate-900 font-serif">Manage Colleges</h1>
-              <button onClick={() => alert('College editor coming soon in phase 2!')} className="px-4 py-2 bg-slate-900 text-white font-bold text-xs flex items-center gap-2 cursor-pointer hover:bg-slate-800">
-                <Plus className="w-4 h-4" /> Add College
-              </button>
+              {!isEditingCollege && (
+                <button onClick={startNewCollege} className="px-4 py-2 bg-slate-900 text-white font-bold text-xs flex items-center gap-2 cursor-pointer hover:bg-slate-800">
+                  <Plus className="w-4 h-4" /> Add College
+                </button>
+              )}
             </div>
             
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 font-bold">
-                  <tr>
-                    <th className="px-6 py-4">College Name</th>
-                    <th className="px-6 py-4">State</th>
-                    <th className="px-6 py-4">Type</th>
-                    <th className="px-6 py-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {collegeList.map(college => (
-                    <tr key={college.id} className="hover:bg-slate-50">
-                      <td className="px-6 py-4 font-bold text-slate-900">{college.name}</td>
-                      <td className="px-6 py-4">{college.state}</td>
-                      <td className="px-6 py-4"><span className="bg-slate-100 text-slate-600 px-2 py-1 text-xs font-bold">{college.collegeType}</span></td>
-                      <td className="px-6 py-4 text-right">
-                        <button onClick={() => alert('Editing coming in phase 2')} className="text-indigo-600 hover:underline font-bold text-xs cursor-pointer">Edit</button>
-                      </td>
+            {isEditingCollege && editingCollege ? (
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="bg-slate-50 border-b border-slate-200 px-6 py-4 flex justify-between items-center">
+                  <h2 className="font-bold text-slate-900 flex items-center gap-2">
+                    <Building className="w-4 h-4" /> {editingCollege.name || 'New College'}
+                  </h2>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => handleDeleteCollege(editingCollege.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg cursor-pointer">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => setIsEditingCollege(false)} className="p-2 text-slate-400 hover:bg-slate-200 rounded-lg cursor-pointer">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                
+                <form onSubmit={handleSaveCollege} className="p-6 space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block mb-2">College Name</label>
+                      <input required type="text" value={editingCollege.name} onChange={e => setEditingCollege({...editingCollege, name: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 focus:outline-none focus:border-slate-900 text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block mb-2">Location</label>
+                      <input required type="text" value={editingCollege.location} onChange={e => setEditingCollege({...editingCollege, location: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 focus:outline-none focus:border-slate-900 text-sm" placeholder="City" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block mb-2">State</label>
+                      <input required type="text" value={editingCollege.state} onChange={e => setEditingCollege({...editingCollege, state: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 focus:outline-none focus:border-slate-900 text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block mb-2">Type</label>
+                      <select value={editingCollege.collegeType} onChange={e => setEditingCollege({...editingCollege, collegeType: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 focus:outline-none focus:border-slate-900 text-sm">
+                        <option value="Private">Private</option>
+                        <option value="Government">Government</option>
+                        <option value="Deemed">Deemed</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block mb-2">Approval Status</label>
+                      <select value={editingCollege.approvalStatus} onChange={e => setEditingCollege({...editingCollege, approvalStatus: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 focus:outline-none focus:border-slate-900 text-sm">
+                        <option value="Approved">Approved</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Warning">Warning</option>
+                        <option value="Unapproved">Unapproved</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block mb-2">Rating (0-5)</label>
+                      <input required type="number" step="0.1" value={editingCollege.rating} onChange={e => setEditingCollege({...editingCollege, rating: parseFloat(e.target.value)})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 focus:outline-none focus:border-slate-900 text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block mb-2">Approved Tuition (₹)</label>
+                      <input required type="number" value={editingCollege.approvedTuition} onChange={e => setEditingCollege({...editingCollege, approvedTuition: parseInt(e.target.value)})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 focus:outline-none focus:border-slate-900 text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block mb-2">Reported Ask (₹)</label>
+                      <input required type="number" value={editingCollege.reportedTotalAsk} onChange={e => setEditingCollege({...editingCollege, reportedTotalAsk: parseInt(e.target.value)})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 focus:outline-none focus:border-slate-900 text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block mb-2">Placement Rate (%)</label>
+                      <input required type="number" value={editingCollege.placementRate} onChange={e => setEditingCollege({...editingCollege, placementRate: parseInt(e.target.value)})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 focus:outline-none focus:border-slate-900 text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block mb-2">Capitation Reports</label>
+                      <input required type="number" value={editingCollege.capitationReports} onChange={e => setEditingCollege({...editingCollege, capitationReports: parseInt(e.target.value)})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 focus:outline-none focus:border-slate-900 text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block mb-2">Marksheet Complaints</label>
+                      <input required type="number" value={editingCollege.marksheetComplaints} onChange={e => setEditingCollege({...editingCollege, marksheetComplaints: parseInt(e.target.value)})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 focus:outline-none focus:border-slate-900 text-sm" />
+                    </div>
+                    <div className="flex items-center pt-8">
+                      <label className="flex items-center gap-2 text-sm font-bold text-slate-700 cursor-pointer">
+                        <input type="checkbox" checked={editingCollege.grievanceOfficerListed} onChange={e => setEditingCollege({...editingCollege, grievanceOfficerListed: e.target.checked})} className="w-5 h-5 text-slate-900 border-slate-300 rounded focus:ring-slate-900" />
+                        Grievance Officer Listed?
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block mb-2">Image URL or Upload</label>
+                    <div className="flex gap-2">
+                      <input type="text" value={editingCollege.image} onChange={e => setEditingCollege({...editingCollege, image: e.target.value})} className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-300 focus:outline-none focus:border-slate-900 text-sm" placeholder="https://..." />
+                      <label className="px-4 py-2.5 bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center cursor-pointer hover:bg-slate-300 transition-colors whitespace-nowrap">
+                        Upload Image
+                        <input type="file" accept="image/*" className="hidden" onChange={handleCollegeImageUpload} />
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block mb-2">Description</label>
+                    <textarea rows={4} value={editingCollege.description} onChange={e => setEditingCollege({...editingCollege, description: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 focus:outline-none focus:border-slate-900 text-sm"></textarea>
+                  </div>
+
+                  <div className="pt-4 border-t border-slate-200">
+                    <button type="submit" className="px-6 py-3 bg-slate-900 text-white font-bold text-xs flex items-center justify-center gap-2 uppercase tracking-wider cursor-pointer hover:bg-slate-800 transition-colors">
+                      <Save className="w-4 h-4" /> Save College
+                    </button>
+                  </div>
+                </form>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 font-bold">
+                    <tr>
+                      <th className="px-6 py-4">College Name</th>
+                      <th className="px-6 py-4">State</th>
+                      <th className="px-6 py-4">Type</th>
+                      <th className="px-6 py-4 text-right">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {collegeList.map(college => (
+                      <tr key={college.id} className="hover:bg-slate-50">
+                        <td className="px-6 py-4 font-bold text-slate-900">{college.name}</td>
+                        <td className="px-6 py-4">{college.state}</td>
+                        <td className="px-6 py-4"><span className="bg-slate-100 text-slate-600 px-2 py-1 text-xs font-bold">{college.collegeType}</span></td>
+                        <td className="px-6 py-4 text-right">
+                          <button onClick={() => {
+                            setEditingCollege(college);
+                            setIsEditingCollege(true);
+                          }} className="text-indigo-600 hover:underline font-bold text-xs cursor-pointer">Edit</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 
