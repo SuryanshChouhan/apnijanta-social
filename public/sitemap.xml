@@ -2,64 +2,84 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <!-- Core Pages -->
   <url>
-    <loc>https://activisthub.org/</loc>
+    <loc>https://apnijanta.com/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://activisthub.org/colleges</loc>
+    <loc>https://apnijanta.com/colleges</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://activisthub.org/blog</loc>
+    <loc>https://apnijanta.com/blog</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://activisthub.org/get-help</loc>
+    <loc>https://apnijanta.com/get-help</loc>
     <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://apnijanta.com/disclaimer</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://apnijanta.com/editorial-policy</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://apnijanta.com/privacy-policy</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://apnijanta.com/resources</loc>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <!-- Blog Posts -->
   <url>
-    <loc>https://activisthub.org/blog/new-wave-student-led-policy-reform</loc>
+    <loc>https://apnijanta.com/blog/new-wave-student-led-policy-reform</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://activisthub.org/blog/navigating-financial-aid-2025</loc>
+    <loc>https://apnijanta.com/blog/navigating-financial-aid-2025</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://activisthub.org/blog/end-of-standardized-testing</loc>
+    <loc>https://apnijanta.com/blog/end-of-standardized-testing</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://activisthub.org/blog/building-community-commuter-schools</loc>
+    <loc>https://apnijanta.com/blog/building-community-commuter-schools</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://activisthub.org/blog/advocating-for-accessibility</loc>
+    <loc>https://apnijanta.com/blog/advocating-for-accessibility</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://activisthub.org/blog/massive-tuition-refund</loc>
+    <loc>https://apnijanta.com/blog/massive-tuition-refund</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://activisthub.org/blog/emergency-housing-rights-secured</loc>
+    <loc>https://apnijanta.com/blog/emergency-housing-rights-secured</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://activisthub.org/blog/overturned-unfair-grading</loc>
+    <loc>https://apnijanta.com/blog/overturned-unfair-grading</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>

@@ -1,5 +1,5 @@
 {
-  "name": "ActivistHub",
+  "name": "ApniJanta",
   "description": "A modern student-led advocacy and resource platform for institutional reform, college evaluations, and legal/mental health assistance.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
