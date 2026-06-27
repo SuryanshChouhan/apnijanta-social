@@ -83,34 +83,43 @@ export default function Footer({ openEmergencyModal }: FooterProps) {
                 </li>
               ))}
               <li>
-                <button onClick={openEmergencyModal} className="hover:text-red-400 transition-colors flex items-center gap-1.5 text-red-500 font-medium">
+                <Link 
+                  href="/editorial-policy"
+                  className="hover:text-white transition-colors"
+                >
+                  Editorial & Review Policy
+                </Link>
+              </li>
+              <li>
+                <button onClick={openEmergencyModal} className="hover:text-red-400 transition-colors flex items-center gap-1.5 text-red-500 font-medium mt-2">
                   <ShieldAlert className="w-3.5 h-3.5" /> Emergency Response
                 </button>
-              </li>
-              <li>
-                <span className="text-gray-500 cursor-not-allowed">Legal Aid Handbook</span>
-              </li>
-              <li>
-                <span className="text-gray-500 cursor-not-allowed">Fee Verification Tool</span>
               </li>
             </ul>
           </div>
 
-          {/* Legal / Accountability */}
+          {/* Contact, Trust & Legal */}
           <div>
-            <h3 className="text-sm font-bold tracking-wider text-gray-200 uppercase mb-4">Legal</h3>
+            <h3 className="text-sm font-bold tracking-wider text-gray-200 uppercase mb-4">Contact & Legal</h3>
+            <div className="space-y-4 text-sm text-gray-400 mb-6">
+              <p className="flex items-start gap-2">
+                <Info className="w-4 h-4 mt-0.5 text-indigo-400" />
+                <span>
+                  <strong>Apnijanta Trust</strong><br/>
+                  Bhopal, Madhya Pradesh 462047, India
+                </span>
+              </p>
+              <p className="flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-indigo-400" />
+                apnijantaofficial@gmail.com
+              </p>
+            </div>
             <ul className="space-y-3 text-sm">
               <li>
-                <span className="text-gray-500">Privacy Policy (Fully Compliant)</span>
+                <Link href="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</Link>
               </li>
               <li>
-                <span className="text-gray-500">Terms of Advocacy</span>
-              </li>
-              <li>
-                <span className="text-gray-500">Anonymity & Security Protection</span>
-              </li>
-              <li>
-                <span className="text-gray-500">Case Submission Disclaimers</span>
+                <Link href="/disclaimer" className="text-gray-400 hover:text-white transition-colors">Disclaimer</Link>
               </li>
               <li>
                 <Link href="/admin" className="text-indigo-500 hover:text-indigo-400 font-medium">Admin Portal</Link>

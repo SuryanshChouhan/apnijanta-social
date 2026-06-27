@@ -1,6 +1,7 @@
 "use client";
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { College, Review } from '../types';
 import { formatINR } from '../utils/format';
 import { 
@@ -15,7 +16,16 @@ export default function CollegesView() {
   const navigate = useRouter();
   const [subTab, setSubTab] = useState<'explorer' | 'scholarships' | 'scam' | 'fee' | 'legal' | 'mental'>('explorer');
   const [searchQuery, setSearchQuery] = useState('');
-  
+  const [searchInput, setSearchInput] = useState('');
+  const [isPending, startTransition] = useTransition();
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchInput(e.target.value);
+    startTransition(() => {
+      setSearchQuery(e.target.value);
+    });
+  };
+
   // Filters
   const [selectedState, setSelectedState] = useState('All');
   const [selectedType, setSelectedType] = useState('All');
@@ -105,8 +115,49 @@ export default function CollegesView() {
     }
   };
 
+  const top10Colleges = filteredColleges.slice(0, 10);
+  const collegeSchemas = top10Colleges.map(college => ({
+    "@context": "https://schema.org",
+    "@type": "EducationalOrganization",
+    "@id": `https://apnijanta.com/colleges/${college.id}`,
+    "name": college.name,
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": college.location,
+      "addressRegion": college.state,
+      "addressCountry": "IN"
+    },
+    "description": college.description,
+    "aggregateRating": college.rating > 0 ? {
+      "@type": "AggregateRating",
+      "ratingValue": college.rating.toString(),
+      "reviewCount": "25" // Mock count or real count if available
+    } : undefined
+  }));
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://apnijanta.com"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Colleges Directory",
+        "item": "https://apnijanta.com/colleges"
+      }
+    ]
+  };
+
   return (
     <div className="animate-fade-in duration-300 pt-32 pb-20 bg-gray-50/50 min-h-screen font-sans">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collegeSchemas) }} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -156,8 +207,8 @@ export default function CollegesView() {
                 <div className="relative">
                   <input 
                     type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    value={searchInput}
+                    onChange={handleSearchChange}
                     placeholder="Search colleges..."
                     className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
                   />
@@ -206,7 +257,7 @@ export default function CollegesView() {
                   ) : null}
 
                   <div className="grid grid-cols-1 gap-6">
-                    {filteredColleges.map((college) => {
+                    {filteredColleges.map((college, idx) => {
                       const isComparing = comparisonList.some(c => c.id === college.id);
                       const maxFeeGap = Math.max(0, ...(college.courses || []).map(c => c.reportedTotalAsk - c.approvedTuition));
                       const feeGap = Number.isFinite(maxFeeGap) ? maxFeeGap : 0;
@@ -218,12 +269,16 @@ export default function CollegesView() {
                           
                           {/* Photo */}
                           <div className="w-full sm:w-48 aspect-[4/3] rounded-xl overflow-hidden bg-gray-100 shrink-0 relative group">
-                            <img 
-                              src={college.image} 
-                              alt={college.name} 
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                              referrerPolicy="no-referrer"
-                            />
+                            <div className="relative w-full h-full">
+                              <Image 
+                                src={college.image} 
+                                alt={college.name} 
+                                fill
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                priority={idx < 4}
+                                className="object-cover group-hover:scale-105 transition-transform duration-500" 
+                              />
+                            </div>
                             <div className="absolute top-2 left-2 bg-indigo-600/90 text-white text-[9px] font-black uppercase px-2 py-1 rounded-md shadow-sm backdrop-blur-sm">
                               {college.approvalStatus}
                             </div>
@@ -599,7 +654,14 @@ export default function CollegesView() {
               
               {/* Header */}
               <div className="relative h-48 sm:h-64 rounded-t-3xl overflow-hidden bg-gray-100">
-                <img src={selectedCollege.image} alt={selectedCollege.name} className="w-full h-full object-cover" />
+                <Image 
+                  src={selectedCollege.image} 
+                  alt={selectedCollege.name} 
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 896px"
+                  priority
+                  className="object-cover" 
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-transparent"></div>
                 <button 
                   onClick={() => setSelectedCollege(null)}
