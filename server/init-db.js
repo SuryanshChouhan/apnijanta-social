@@ -17,6 +17,18 @@ async function initDB() {
   try {
     console.log('Connecting to PostgreSQL...');
     
+    // Create Site Content table (CMS)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS site_content (
+        id VARCHAR(255) PRIMARY KEY,
+        value TEXT NOT NULL,
+        section VARCHAR(255) NOT NULL,
+        field_type VARCHAR(50) DEFAULT 'text',
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log('Site Content table ready.');
+
     // Create Blogs Table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS blogs (
@@ -46,10 +58,6 @@ async function initDB() {
         college_type VARCHAR(100),
         approval_status VARCHAR(100),
         logo_text VARCHAR(10),
-        approved_tuition INTEGER,
-        reported_total_ask INTEGER,
-        tuition VARCHAR(100),
-        placement_rate FLOAT,
         rating FLOAT,
         image TEXT,
         tags JSONB,
@@ -57,7 +65,8 @@ async function initDB() {
         transparency_score JSONB,
         capitation_reports INTEGER,
         marksheet_complaints INTEGER,
-        grievance_officer_listed BOOLEAN
+        grievance_officer_listed BOOLEAN,
+        courses JSONB
       );
     `);
     console.log('Colleges table ready.');
@@ -97,7 +106,21 @@ async function initDB() {
     `);
     console.log('Reviews table ready.');
 
-    console.log('Database initialization complete!');
+    // Create Active Channels Table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS active_channels (
+        id VARCHAR(255) PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        badge_type VARCHAR(50) NOT NULL,
+        protest_title VARCHAR(255) NOT NULL,
+        description TEXT,
+        status_text VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log('Active Channels table ready.');
+
+    console.log('Database initialization complete.');
   } catch (error) {
     console.error('Error initializing database:', error);
   } finally {

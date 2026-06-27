@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useContent } from '../context/ContentContext';
 import { Tab } from '../types';
 import { 
   School, 
@@ -50,6 +51,7 @@ import {
 export default function HomeView() {
 
   const navigate = useRouter();
+  const { content } = useContent();
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [fallbackText, setFallbackText] = useState<{id: string, text: string} | null>(null);
 
@@ -68,36 +70,53 @@ export default function HomeView() {
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
 
 
-  const victories = [
+  const [latestBlogs, setLatestBlogs] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch('/api/blogs')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setLatestBlogs(data.slice(0, 3));
+        }
+      })
+      .catch(err => console.error('Error fetching blogs:', err));
+  }, []);
+
+  const [activeChannels, setActiveChannels] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch('/api/active-channels?limit=3')
+      .then(res => res.json())
+      .then(data => setActiveChannels(data))
+      .catch(err => console.error('Error fetching active channels:', err));
+  }, []);
+
+  const stylingOptions = [
+    { badgeColor: 'blue', gradient: 'from-[#f9c74f] via-[#e9c46a] to-white/5' },
+    { badgeColor: 'green', gradient: 'from-[#90be6d]/80 via-[#90be6d]/30 to-white/5' },
+    { badgeColor: 'slate', gradient: 'from-[#bc8a5f]/80 via-[#bc8a5f]/30 to-white/5' }
+  ];
+
+  const victories = latestBlogs.length > 0 ? latestBlogs.map((blog, index) => ({
+    id: blog.id,
+    slug: blog.slug,
+    category: blog.category || 'News',
+    date: new Date(blog.date || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    title: blog.title,
+    summary: blog.excerpt,
+    image: blog.image,
+    badgeColor: stylingOptions[index % stylingOptions.length].badgeColor,
+    gradient: stylingOptions[index % stylingOptions.length].gradient
+  })) : [
     {
-      id: 'vic-1',
-      slug: 'massive-tuition-refund',
-      category: 'Finance',
-      badgeColor: 'blue',
-      date: 'Oct 12, 2023',
-      title: 'Massive Tuition Refund Secured for Spring Cohort',
-      summary: 'After a semester of inadequate online instruction, our coalition successfully negotiated a 15% tuition rebate for...',
-      gradient: 'from-[#f9c74f] via-[#e9c46a] to-white/5'
+      id: 'vic-skeleton-1', slug: '', category: 'Loading...', badgeColor: 'blue', date: '', title: 'Loading...', summary: '', image: '', gradient: 'from-gray-200 to-gray-100'
     },
     {
-      id: 'vic-2',
-      slug: 'emergency-housing-rights-secured',
-      category: 'Housing',
-      badgeColor: 'green',
-      date: 'Sep 28, 2023',
-      title: 'Emergency Housing Rights Secured for Dorm Evictees',
-      summary: 'Blocked sudden dorm closures and secured temporary hotel accommodations for 200+ students...',
-      gradient: 'from-[#90be6d]/80 via-[#90be6d]/30 to-white/5'
+      id: 'vic-skeleton-2', slug: '', category: 'Loading...', badgeColor: 'green', date: '', title: 'Loading...', summary: '', image: '', gradient: 'from-gray-200 to-gray-100'
     },
     {
-      id: 'vic-3',
-      slug: 'overturned-unfair-grading',
-      category: 'Academic',
-      badgeColor: 'slate',
-      date: 'Sep 15, 2023',
-      title: 'Overturned Unfair Departmental Grading Curve',
-      summary: 'Investigated and dismantled a discriminatory curve system in the Engineering department, resulting in...',
-      gradient: 'from-[#bc8a5f]/80 via-[#bc8a5f]/30 to-white/5'
+      id: 'vic-skeleton-3', slug: '', category: 'Loading...', badgeColor: 'slate', date: '', title: 'Loading...', summary: '', image: '', gradient: 'from-gray-200 to-gray-100'
     }
   ];
 
@@ -116,18 +135,35 @@ export default function HomeView() {
           <div className="lg:col-span-7 space-y-8 text-center lg:text-left order-2 lg:order-1">
             <div className="inline-flex items-center gap-2 bg-slate-200/50 backdrop-blur-md px-3 py-1.5 rounded-full border border-slate-300 text-slate-800 text-xs font-semibold tracking-wider uppercase font-mono shadow-sm">
               <Sparkles className="w-4 h-4 text-indigo-600 animate-pulse" />
-              <span>EMPOWERING STUDENTS</span>
+              <span>{content['home_hero_label'] || 'EMPOWERING STUDENTS'}</span>
             </div>
 
             <div className="space-y-4">
-              <h1 className="text-5xl sm:text-7xl font-black tracking-tight text-slate-950 leading-[0.95]">
-                Your Campus. <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-600 to-emerald-600">
-                  Your Voice.
-                </span>
+              <h1 className="text-5xl sm:text-7xl font-black tracking-tight text-slate-950 leading-[0.95] whitespace-pre-line">
+                {(() => {
+                  const title = content['home_hero_title'] || 'Your Campus.\nYour Voice.';
+                  const lines = title.split('\n');
+                  if (lines.length > 1) {
+                    const lastLine = lines.pop();
+                    return (
+                      <>
+                        {lines.map((l, i) => (
+                          <React.Fragment key={i}>
+                            {l}
+                            <br />
+                          </React.Fragment>
+                        ))}
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-600 to-emerald-600 block sm:inline">
+                          {lastLine}
+                        </span>
+                      </>
+                    );
+                  }
+                  return title;
+                })()}
               </h1>
               <p className="text-base sm:text-xl text-slate-600 font-light max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-                Apnijanta is a student-powered platform that helps you fight unfair policies, recover fees, protect your housing rights, and hold universities accountable.
+                {content['home_hero_desc'] || 'Apnijanta is a student-powered platform that helps you fight unfair policies, recover fees, protect your housing rights, and hold universities accountable.'}
               </p>
             </div>
 
@@ -194,64 +230,53 @@ export default function HomeView() {
                   </span>
                 </div>
 
-                {/* Simulated Incident Report Status Cards */}
+                {/* Dynamic Active Channels Feed */}
                 <div className="space-y-3">
-                  <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex items-start gap-3">
-                    <div className="p-2 bg-red-100 text-red-700 rounded-lg shrink-0 mt-0.5">
-                      <ShieldAlert className="w-4 h-4 animate-pulse" />
-                    </div>
-                    <div className="space-y-1 text-xs w-full">
-                      <div className="flex justify-between items-center">
-                        <strong className="text-slate-900">Boston Union Hub</strong>
-                        <span className="text-[10px] text-red-600 bg-red-50 px-1.5 py-0.5 rounded font-mono font-bold">EMERGENCY</span>
-                      </div>
-                      <p className="text-slate-700 font-semibold text-[11px]">Protest: U-Dorm Habitability</p>
-                      <p className="text-slate-500 text-[11px] leading-relaxed">Water leak caused black mold growth. Eviction notice issued to 42 juniors.</p>
-                      <div className="text-[10px] text-slate-400 font-mono flex flex-wrap items-center gap-1 mt-1">
-                        <span>Started: Oct 12, 2025</span>
-                        <span className="hidden sm:inline">â€¢</span>
-                        <span>Dispatched 2 mins ago</span>
-                      </div>
-                    </div>
-                  </div>
+                  {activeChannels.map((channel) => {
+                    let Icon = ShieldAlert;
+                    let iconBg = 'bg-slate-100 text-slate-700';
+                    let badgeBg = 'bg-slate-50 text-slate-600';
 
-                  <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex items-start gap-3">
-                    <div className="p-2 bg-indigo-100 text-indigo-700 rounded-lg shrink-0 mt-0.5">
-                      <Scale className="w-4 h-4" />
-                    </div>
-                    <div className="space-y-1 text-xs w-full">
-                      <div className="flex justify-between items-center">
-                        <strong className="text-slate-900">California State Coalition</strong>
-                        <span className="text-[10px] text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded font-mono font-bold">REPRESENTATION</span>
-                      </div>
-                      <p className="text-slate-700 font-semibold text-[11px]">Protest: Tuition Surcharge Audit</p>
-                      <p className="text-slate-500 text-[11px] leading-relaxed">Syllabus claims 40-hour physical lab access; actual lab has been locked down.</p>
-                      <div className="text-[10px] text-slate-400 font-mono flex flex-wrap items-center gap-1 mt-1">
-                        <span>Started: Oct 10, 2025</span>
-                        <span className="hidden sm:inline">â€¢</span>
-                        <span>Drafting Brief 14 mins ago</span>
-                      </div>
-                    </div>
-                  </div>
+                    if (channel.badge_type === 'EMERGENCY') {
+                      Icon = ShieldAlert;
+                      iconBg = 'bg-red-100 text-red-700';
+                      badgeBg = 'bg-red-50 text-red-600';
+                    } else if (channel.badge_type === 'REPRESENTATION') {
+                      Icon = Scale;
+                      iconBg = 'bg-indigo-100 text-indigo-700';
+                      badgeBg = 'bg-indigo-50 text-indigo-600';
+                    } else if (channel.badge_type === 'ADVOCACY') {
+                      Icon = Users;
+                      iconBg = 'bg-emerald-100 text-emerald-700';
+                      badgeBg = 'bg-emerald-50 text-emerald-600';
+                    } else {
+                      Icon = Activity;
+                    }
 
-                  <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex items-start gap-3">
-                    <div className="p-2 bg-emerald-100 text-emerald-700 rounded-lg shrink-0 mt-0.5">
-                      <Users className="w-4 h-4" />
-                    </div>
-                    <div className="space-y-1 text-xs w-full">
-                      <div className="flex justify-between items-center">
-                        <strong className="text-slate-900">Chicago Student Assembly</strong>
-                        <span className="text-[10px] text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded font-mono font-bold">ADVOCACY</span>
+                    return (
+                      <div key={channel.id} className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex items-start gap-3">
+                        <div className={`p-2 rounded-lg shrink-0 mt-0.5 ${iconBg}`}>
+                          <Icon className={`w-4 h-4 ${channel.badge_type === 'EMERGENCY' ? 'animate-pulse' : ''}`} />
+                        </div>
+                        <div className="space-y-1 text-xs w-full">
+                          <div className="flex justify-between items-center">
+                            <strong className="text-slate-900">{channel.title}</strong>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${badgeBg}`}>
+                              {channel.badge_type}
+                            </span>
+                          </div>
+                          <p className="text-slate-700 font-semibold text-[11px]">{channel.protest_title}</p>
+                          <p className="text-slate-500 text-[11px] leading-relaxed">{channel.description}</p>
+                          <div className="text-[10px] text-slate-400 font-mono flex flex-wrap items-center gap-1 mt-1">
+                            <span>{channel.status_text}</span>
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-slate-700 font-semibold text-[11px]">Protest: Mental Health Cutbacks</p>
-                      <p className="text-slate-500 text-[11px] leading-relaxed">Administration plans to downsize counseling staff by 30%. Waitlists are at 5 weeks.</p>
-                      <div className="text-[10px] text-slate-400 font-mono flex flex-wrap items-center gap-1 mt-1">
-                        <span>Started: Oct 08, 2025</span>
-                        <span className="hidden sm:inline">â€¢</span>
-                        <span>Reviewing Signatures 1 hr ago</span>
-                      </div>
-                    </div>
-                  </div>
+                    );
+                  })}
+                  {activeChannels.length === 0 && (
+                    <div className="text-center p-4 text-xs text-slate-500">Loading live feed...</div>
+                  )}
                 </div>
               </div>
             </div>
@@ -268,10 +293,10 @@ export default function HomeView() {
               <Compass className="w-3.5 h-3.5 text-indigo-600" /> BROWSE BY PROBLEM
             </div>
             <h3 className="text-3xl sm:text-5xl font-black text-slate-950 tracking-tight leading-tight">
-              Know Your Rights.
+              {content['home_rights_title'] || 'Know Your Rights.'}
             </h3>
             <p className="text-slate-600 text-base sm:text-lg">
-              We've built instant action playbooks for the most common issues faced by students in Indian engineering and medical colleges. Choose your issue below to get started.
+              {content['home_rights_desc'] || "We've built instant action playbooks for the most common issues faced by students in Indian engineering and medical colleges. Choose your issue below to get started."}
             </p>
           </div>
 
@@ -440,7 +465,7 @@ export default function HomeView() {
 
 
       {/* 🏆 SECTION: CASE RECORDS & RESOLUTIONS (The Redesigned Interactive Cards Grid) */}
-      <section id="case-briefs" className="pt-12 pb-24 bg-gradient-to-b from-[#f4f7ff] to-white relative px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <section id="victories" className="pt-12 pb-24 bg-gradient-to-b from-[#f4f7ff] to-white relative px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="space-y-2 mb-12">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div className="space-y-1 text-center sm:text-left">
@@ -485,14 +510,29 @@ export default function HomeView() {
                 className="bg-white rounded-3xl shadow-[0_4px_24px_rgb(0,0,0,0.06)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.1)] hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden group cursor-pointer block"
               >
                 
-                {/* Top Gradient Placeholder */}
-                <div className={`h-[180px] relative bg-gradient-to-br ${victory.gradient}`}>
-                  <div className="absolute top-6 left-6">
-                    <span className={`text-[11px] font-bold px-3 py-1 rounded-full ${badgeClasses}`}>
-                      {victory.category}
-                    </span>
+                {/* Top Image or Gradient Placeholder */}
+                {victory.image ? (
+                  <div className="h-[180px] relative bg-slate-100">
+                    <img 
+                      src={victory.image} 
+                      alt={victory.title} 
+                      className="w-full h-full object-cover" 
+                    />
+                    <div className="absolute top-6 left-6">
+                      <span className={`text-[11px] font-bold px-3 py-1 rounded-full ${badgeClasses} shadow-sm`}>
+                        {victory.category}
+                      </span>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className={`h-[180px] relative bg-gradient-to-br ${victory.gradient}`}>
+                    <div className="absolute top-6 left-6">
+                      <span className={`text-[11px] font-bold px-3 py-1 rounded-full ${badgeClasses} shadow-sm`}>
+                        {victory.category}
+                      </span>
+                    </div>
+                  </div>
+                )}
 
                 {/* Content Box */}
                 <div className="p-8 flex flex-col flex-grow bg-white">

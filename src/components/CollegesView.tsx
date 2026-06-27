@@ -26,6 +26,7 @@ export default function CollegesView() {
   // Comparison Tool State
   const [comparisonList, setComparisonList] = useState<College[]>([]);
   const [showCompareModal, setShowCompareModal] = useState(false);
+  const [selectedCollege, setSelectedCollege] = useState<College | null>(null);
 
   // Scam Checker state
   const [admissionLetterStatus, setAdmissionLetterStatus] = useState<'idle' | 'scanning' | 'clean' | 'suspicious'>('idle');
@@ -75,7 +76,7 @@ export default function CollegesView() {
     });
 
     return result;
-  }, [searchQuery, selectedState, selectedType, selectedIssue, selectedStatus, sortBy]);
+  }, [searchQuery, selectedState, selectedType, selectedIssue, selectedStatus, sortBy, collegeList]);
 
   const toggleComparison = (college: College) => {
     if (comparisonList.some(c => c.id === college.id)) {
@@ -151,10 +152,6 @@ export default function CollegesView() {
             {/* Filters (Only visible when Explorer is active) */}
             {subTab === 'explorer' && (
               <div className="bg-white border border-gray-100 p-5 rounded-2xl shadow-sm space-y-5">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 flex items-center gap-2">
-                  <Filter className="w-3.5 h-3.5" /> Directory Filters
-                </p>
-
                 {/* Search */}
                 <div className="relative">
                   <input 
@@ -167,39 +164,6 @@ export default function CollegesView() {
                   <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-3" />
                 </div>
 
-                {/* Selectors */}
-                <div className="space-y-4">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase text-gray-400">State</label>
-                    <select value={selectedState} onChange={(e) => setSelectedState(e.target.value)} className="w-full p-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                      {STATES.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase text-gray-400">Institution Type</label>
-                    <select value={selectedType} onChange={(e) => setSelectedType(e.target.value)} className="w-full p-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                      {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase text-gray-400">Reported Issues</label>
-                    <select value={selectedIssue} onChange={(e) => setSelectedIssue(e.target.value)} className="w-full p-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                      {ISSUES.map(i => <option key={i} value={i}>{i}</option>)}
-                    </select>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase text-gray-400">Approval Status</label>
-                    <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)} className="w-full p-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                      {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </div>
-                  <div className="space-y-1 pt-2 border-t border-gray-100">
-                    <label className="text-[10px] font-bold uppercase text-gray-400">Sort By</label>
-                    <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="w-full p-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                      {SORTS.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </div>
-                </div>
               </div>
             )}
           </div>
@@ -231,19 +195,26 @@ export default function CollegesView() {
                 </div>
 
                 <div className="space-y-6">
-                  {filteredColleges.length === 0 && (
+                  {collegeList.length === 0 ? (
+                    <div className="text-center py-12 text-gray-500 text-sm bg-white border border-gray-100 rounded-2xl animate-pulse">
+                      Loading verified college directory...
+                    </div>
+                  ) : filteredColleges.length === 0 ? (
                     <div className="text-center py-12 text-gray-500 text-sm bg-white border border-gray-100 rounded-2xl">
                       No colleges match your strict filters.
                     </div>
-                  )}
+                  ) : null}
 
                   <div className="grid grid-cols-1 gap-6">
                     {filteredColleges.map((college) => {
                       const isComparing = comparisonList.some(c => c.id === college.id);
-                      const feeGap = college.reportedTotalAsk - college.approvedTuition;
+                      const maxFeeGap = Math.max(0, ...(college.courses || []).map(c => c.reportedTotalAsk - c.approvedTuition));
+                      const feeGap = Number.isFinite(maxFeeGap) ? maxFeeGap : 0;
+                      const maxApprovedFee = Math.max(0, ...(college.courses || []).map(c => c.approvedTuition));
+                      const maxReportedAsk = Math.max(0, ...(college.courses || []).map(c => c.reportedTotalAsk));
 
                       return (
-                        <div key={college.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-all flex flex-col sm:flex-row gap-5">
+                        <div key={college.id} onClick={() => setSelectedCollege(college)} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-all flex flex-col sm:flex-row gap-5 cursor-pointer">
                           
                           {/* Photo */}
                           <div className="w-full sm:w-48 aspect-[4/3] rounded-xl overflow-hidden bg-gray-100 shrink-0 relative group">
@@ -291,12 +262,12 @@ export default function CollegesView() {
                               <div className="mt-4 grid grid-cols-2 gap-4 bg-gray-50 p-3 rounded-xl border border-gray-100">
                                 <div>
                                   <p className="text-[9px] font-bold uppercase text-gray-400 mb-0.5">Approved Fee</p>
-                                  <p className="text-sm font-bold text-gray-900">{formatINR(college.approvedTuition)}</p>
+                                  <p className="text-sm font-bold text-gray-900">{maxApprovedFee > 0 ? formatINR(maxApprovedFee) : 'N/A'}</p>
                                 </div>
                                 <div>
                                   <p className="text-[9px] font-bold uppercase text-gray-400 mb-0.5">Reported Total Ask</p>
                                   <div className="flex items-center gap-2">
-                                    <p className={`text-sm font-bold ${feeGap > 0 ? 'text-red-600' : 'text-gray-900'}`}>{formatINR(college.reportedTotalAsk)}</p>
+                                    <p className={`text-sm font-bold ${feeGap > 0 ? 'text-red-600' : 'text-gray-900'}`}>{maxReportedAsk > 0 ? formatINR(maxReportedAsk) : 'N/A'}</p>
                                     {feeGap > 0 && <span className="bg-red-100 text-red-700 text-[9px] font-extrabold px-1.5 py-0.5 rounded-md border border-red-200">GAP: {formatINR(feeGap)}</span>}
                                   </div>
                                 </div>
@@ -312,7 +283,7 @@ export default function CollegesView() {
                                 ))}
                               </div>
                               <button
-                                onClick={() => toggleComparison(college)}
+                                onClick={(e) => { e.stopPropagation(); toggleComparison(college); }}
                                 className={`text-xs font-bold px-4 py-2 rounded-xl transition-all cursor-pointer ${
                                   isComparing ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
                                 }`}
@@ -548,16 +519,22 @@ export default function CollegesView() {
                 <tbody className="text-gray-800">
                   <tr>
                     <td className="p-4 font-bold text-gray-600 text-xs uppercase tracking-wider">Approved Annual Fee</td>
-                    {comparisonList.map(col => <td key={col.id} className="p-4 border-x border-gray-200 bg-white font-bold text-center">{formatINR(col.approvedTuition)}</td>)}
+                    {comparisonList.map(col => {
+                      const maxApproved = Math.max(0, ...(col.courses || []).map(c => c.approvedTuition));
+                      return <td key={col.id} className="p-4 border-x border-gray-200 bg-white font-bold text-center">{maxApproved > 0 ? formatINR(maxApproved) : 'N/A'}</td>
+                    })}
                   </tr>
                   <tr>
-                    <td className="p-4 font-bold text-gray-600 text-xs uppercase tracking-wider">Reported Total Ask</td>
-                    {comparisonList.map(col => <td key={col.id} className="p-4 border-x border-gray-200 bg-white font-extrabold text-red-600 text-center">{formatINR(col.reportedTotalAsk)}</td>)}
+                    <td className="p-4 font-bold text-gray-600 text-xs uppercase tracking-wider">Max Total Ask</td>
+                    {comparisonList.map(col => {
+                      const maxAsk = Math.max(0, ...(col.courses || []).map(c => c.reportedTotalAsk));
+                      return <td key={col.id} className="p-4 border-x border-gray-200 bg-white font-extrabold text-red-600 text-center">{maxAsk > 0 ? formatINR(maxAsk) : 'N/A'}</td>
+                    })}
                   </tr>
                   <tr>
                     <td className="p-4 font-black text-gray-900 text-sm">Gap (Hidden Fees)</td>
                     {comparisonList.map(col => {
-                      const gap = col.reportedTotalAsk - col.approvedTuition;
+                      const gap = Math.max(0, ...(col.courses || []).map(c => c.reportedTotalAsk - c.approvedTuition));
                       return (
                         <td key={col.id} className="p-4 border-x border-gray-200 bg-red-50/50 font-black text-lg text-center">
                           {gap > 0 ? <span className="text-red-600 flex items-center justify-center gap-1 bg-red-100 px-3 py-1 rounded-lg w-max mx-auto border border-red-200">⚠️ {formatINR(gap)}</span> : <span className="text-emerald-600 flex items-center justify-center gap-1"><CheckCircle className="w-4 h-4"/> None</span>}
@@ -608,6 +585,137 @@ export default function CollegesView() {
           </div>
         </div>
       )}
+        {/* Compare Modal */}
+        {showCompareModal && (
+          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <button onClick={() => setShowCompareModal(false)} className="bg-white p-4 rounded-xl font-bold">Close Compare</button>
+          </div>
+        )}
+
+        {/* College Details & Courses Modal */}
+        {selectedCollege && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[100] overflow-y-auto p-4 sm:p-8" onClick={() => setSelectedCollege(null)}>
+            <div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl relative mx-auto my-4 sm:my-8" onClick={(e) => e.stopPropagation()}>
+              
+              {/* Header */}
+              <div className="relative h-48 sm:h-64 rounded-t-3xl overflow-hidden bg-gray-100">
+                <img src={selectedCollege.image} alt={selectedCollege.name} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-transparent"></div>
+                <button 
+                  onClick={() => setSelectedCollege(null)}
+                  className="absolute top-4 right-4 p-2 bg-black/20 hover:bg-black/40 text-white rounded-full backdrop-blur-md transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                <div className="absolute bottom-6 left-6 right-6">
+                  <span className="inline-block px-3 py-1 bg-indigo-600 text-white text-[10px] font-black uppercase tracking-wider rounded-lg mb-2 shadow-sm">
+                    {selectedCollege.collegeType}
+                  </span>
+                  <h2 className="text-3xl sm:text-4xl font-black text-white">{selectedCollege.name}</h2>
+                  <p className="text-indigo-100 text-sm font-medium mt-1 flex items-center gap-1.5">
+                    <MapPin className="w-4 h-4" /> {selectedCollege.location}, {selectedCollege.state}
+                  </p>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="p-6 sm:p-8 space-y-8">
+                {/* Description & Tags */}
+                <div>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {selectedCollege.tags.map(tag => (
+                      <span key={tag} className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg">{tag}</span>
+                    ))}
+                  </div>
+                  <p className="text-gray-600 text-sm leading-relaxed">{selectedCollege.description || "No description provided."}</p>
+                </div>
+
+                {/* Courses List */}
+                <div>
+                  <h3 className="text-xl font-black text-gray-900 mb-4 flex items-center gap-2">
+                    <BookOpen className="w-5 h-5 text-indigo-600" /> Programs & Fee Structures
+                  </h3>
+                  
+                  {(!selectedCollege.courses || selectedCollege.courses.length === 0) ? (
+                    <div className="bg-gray-50 border border-gray-100 rounded-xl p-8 text-center">
+                      <p className="text-gray-500 font-medium text-sm">No course data has been submitted for this college yet.</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-4">
+                      {selectedCollege.courses.map((course) => {
+                        const gap = course.reportedTotalAsk - course.approvedTuition;
+                        const hasGap = gap > 0;
+                        return (
+                          <div key={course.id} className="bg-white border border-gray-200 rounded-2xl p-5 hover:border-indigo-400 transition-all shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 cursor-pointer group">
+                            <div className="flex-1">
+                              <h4 className="font-bold text-gray-900 text-lg group-hover:text-indigo-600 transition-colors">{course.name}</h4>
+                            </div>
+                            <div className="flex flex-wrap md:flex-nowrap gap-6 md:gap-8 shrink-0">
+                              <div className="flex flex-col">
+                                <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-1">Approved Fee</span>
+                                <span className="font-bold text-gray-700">{formatINR(course.approvedTuition)}</span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-1">Total Ask</span>
+                                <div className="flex items-center gap-2">
+                                  <span className={`font-bold ${hasGap ? 'text-red-600' : 'text-gray-900'}`}>{formatINR(course.reportedTotalAsk)}</span>
+                                  {hasGap && <span className="bg-red-50 text-red-700 px-1.5 py-0.5 rounded text-[9px] font-black border border-red-100">+{formatINR(gap)}</span>}
+                                </div>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-1">Placement</span>
+                                <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg w-max">{course.placementRate}%</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Transparency Score */}
+                <div className="bg-indigo-950 rounded-2xl p-6 sm:p-8 text-white flex flex-col md:flex-row items-center gap-8">
+                  <div className="shrink-0 text-center">
+                    <div className="w-32 h-32 rounded-full border-4 border-indigo-500/30 flex items-center justify-center flex-col relative bg-indigo-900/50">
+                      <span className="text-4xl font-black">{selectedCollege.transparencyScore.total}</span>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-300">/ 100</span>
+                      {selectedCollege.transparencyScore.total >= 80 && (
+                        <div className="absolute -bottom-2 bg-emerald-500 text-white text-[9px] font-black uppercase px-2 py-1 rounded-md shadow-lg border border-emerald-400">
+                          Excellent
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex-1 w-full">
+                    <h4 className="text-lg font-bold mb-4 flex items-center gap-2">
+                      <ShieldAlert className="w-5 h-5 text-indigo-400" /> Transparency Breakdown
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <div className="flex justify-between text-xs mb-1 font-medium text-indigo-200"><span>Fee Structure Published</span> <span>{selectedCollege.transparencyScore.feeStructurePublished}/25</span></div>
+                        <div className="w-full bg-indigo-900 h-1.5 rounded-full overflow-hidden"><div className="bg-indigo-400 h-full" style={{width: `${(selectedCollege.transparencyScore.feeStructurePublished/25)*100}%`}}></div></div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-xs mb-1 font-medium text-indigo-200"><span>Grievance Response</span> <span>{selectedCollege.transparencyScore.grievanceResponseRate}/25</span></div>
+                        <div className="w-full bg-indigo-900 h-1.5 rounded-full overflow-hidden"><div className="bg-indigo-400 h-full" style={{width: `${(selectedCollege.transparencyScore.grievanceResponseRate/25)*100}%`}}></div></div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-xs mb-1 font-medium text-indigo-200"><span>Document Release</span> <span>{selectedCollege.transparencyScore.documentReleaseRecord}/25</span></div>
+                        <div className="w-full bg-indigo-900 h-1.5 rounded-full overflow-hidden"><div className="bg-indigo-400 h-full" style={{width: `${(selectedCollege.transparencyScore.documentReleaseRecord/25)*100}%`}}></div></div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-xs mb-1 font-medium text-indigo-200"><span>Capitation Clean Record</span> <span>{selectedCollege.transparencyScore.capitationComplaintHistory}/25</span></div>
+                        <div className="w-full bg-indigo-900 h-1.5 rounded-full overflow-hidden"><div className="bg-indigo-400 h-full" style={{width: `${(selectedCollege.transparencyScore.capitationComplaintHistory/25)*100}%`}}></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        )}
 
     </div>
   );

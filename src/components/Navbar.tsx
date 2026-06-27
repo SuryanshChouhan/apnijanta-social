@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { ShieldAlert, BookOpen, School, FileText, ArrowRight, Menu, X, PhoneCall } from 'lucide-react';
+import { useContent } from '../context/ContentContext';
 
 interface NavbarProps {
   openEmergencyModal: () => void;
@@ -13,7 +14,10 @@ export default function Navbar({ openEmergencyModal }: NavbarProps) {
   const currentPath = usePathname();
   const navigate = useRouter();
 
-  const navItems = [
+  const { getContentArray } = useContent();
+
+  const cmsNav = getContentArray<{ label: string, path: string, hash?: string }>('navbar_links');
+  const navItems = cmsNav.length > 0 ? cmsNav : [
     { label: 'Home', path: '/' },
     { label: 'Blog', path: '/blog' },
     { label: 'Colleges', path: '/colleges' },

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Scale, FileText, Landmark, Building, ArrowRight, Check, Copy, AlertTriangle, BookOpen, ShieldAlert, GraduationCap, ArrowUpRight } from 'lucide-react';
+import { useContent } from '../context/ContentContext';
 
 export default function ResourcesView() {
   const navigate = useRouter();
@@ -20,7 +21,10 @@ export default function ResourcesView() {
     }
   };
 
-  const regulations = [
+  const { content, getContentArray } = useContent();
+  const cmsRegulations = getContentArray<any>('resources_regulations');
+
+  const defaultRegulations = [
     {
       id: 'doc-retention',
       icon: FileText,
@@ -77,6 +81,17 @@ export default function ResourcesView() {
     }
   ];
 
+  const regulations = cmsRegulations.length > 0 ? cmsRegulations : defaultRegulations;
+  
+  const iconMap: Record<string, any> = {
+    indigo: FileText,
+    emerald: Landmark,
+    amber: Building,
+    red: AlertTriangle,
+    rose: ShieldAlert,
+    blue: ArrowUpRight
+  };
+
   return (
     <div className="relative bg-slate-50 min-h-screen text-slate-800 antialiased overflow-x-hidden selection:bg-indigo-600 selection:text-white pt-24 pb-20">
       
@@ -91,17 +106,17 @@ export default function ResourcesView() {
             <Scale className="w-4 h-4" /> STUDENT RIGHTS & LEGAL ARSENAL
           </div>
           <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-slate-950 leading-[1.1]">
-            The Rules They Don't Want You to Know.
+            {content['resources_title'] || "The Rules They Don't Want You to Know."}
           </h1>
           <p className="text-lg sm:text-xl text-slate-600 font-light leading-relaxed">
-            Colleges rely on intimidation and ignorance. Equip yourself with the exact UGC and AICTE mandates to fight back against hidden fees, withheld marksheets, and illegal policies.
+            {content['resources_desc'] || "Colleges rely on intimidation and ignorance. Equip yourself with the exact UGC and AICTE mandates to fight back against hidden fees, withheld marksheets, and illegal policies."}
           </p>
         </div>
 
         {/* Regulations Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {regulations.map((reg) => {
-            const Icon = reg.icon;
+          {regulations.map((reg: any, index: number) => {
+            const Icon = iconMap[reg.color] || FileText;
             const colorMap: Record<string, string> = {
               indigo: 'bg-indigo-50 text-indigo-600 border-indigo-200',
               emerald: 'bg-emerald-50 text-emerald-600 border-emerald-200',
@@ -120,7 +135,7 @@ export default function ResourcesView() {
             };
 
             return (
-              <div key={reg.id} className="bg-white border border-slate-200 rounded-[2rem] p-6 sm:p-8 flex flex-col justify-between hover:shadow-2xl hover:-translate-y-1 hover:shadow-indigo-500/10 transition-all duration-300">
+              <div key={reg.id || index} className="bg-white border border-slate-200 rounded-[2rem] p-6 sm:p-8 flex flex-col justify-between hover:shadow-2xl hover:-translate-y-1 hover:shadow-indigo-500/10 transition-all duration-300">
                 <div className="space-y-4 mb-8">
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${iconColorMap[reg.color]}`}>
                     <Icon className="w-6 h-6" />

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import { ShieldAlert, Check, Copy } from 'lucide-react';
@@ -8,6 +9,9 @@ import { ShieldAlert, Check, Copy } from 'lucide-react';
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const [emergencyModalOpen, setEmergencyModalOpen] = useState(false);
   const [copiedText, setCopiedText] = useState<string | null>(null);
+  
+  const pathname = usePathname();
+  const isAdminRoute = pathname?.startsWith('/admin');
 
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -17,13 +21,13 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   return (
     <>
-      <Navbar openEmergencyModal={() => setEmergencyModalOpen(true)} />
+      {!isAdminRoute && <Navbar openEmergencyModal={() => setEmergencyModalOpen(true)} />}
       
-      <main className="min-h-[calc(100vh-280px)]">
+      <main className={!isAdminRoute ? "min-h-[calc(100vh-280px)]" : "min-h-screen"}>
         {children}
       </main>
 
-      <Footer openEmergencyModal={() => setEmergencyModalOpen(true)} />
+      {!isAdminRoute && <Footer openEmergencyModal={() => setEmergencyModalOpen(true)} />}
 
       {emergencyModalOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">

@@ -5,9 +5,10 @@ import { SupportRequest, Tab } from '../types';
 import { 
   Lock, Shield, Clock, PhoneCall, Mail, MessageSquare, AlertTriangle, 
   CheckCircle, ArrowRight, Upload, GraduationCap, Landmark, Home, 
-  HeartPulse, FileText, Trash, ChevronRight, Sparkles, School
+  HeartPulse, FileText, Trash, ChevronRight, Sparkles, School, Info
 } from 'lucide-react';
 import { useGlobal } from '../context/GlobalContext';
+import { detectUrgency } from '../utils/detectUrgency';
 
 export default function GetHelpView() {
   const { handleAddSupportRequest: addSupportRequest } = useGlobal();
@@ -15,15 +16,18 @@ export default function GetHelpView() {
   const [step, setStep] = useState(1);
   
   // Form State
-  const [urgency, setUrgency] = useState<SupportRequest['urgency']>('Standard Support');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [contactNumber, setContactNumber] = useState('');
+  const [address, setAddress] = useState('');
   const [contactMethod, setContactMethod] = useState<SupportRequest['contactMethod']>('Email');
   const [category, setCategory] = useState('Financial (Aid/Fees)');
   const [collegeName, setCollegeName] = useState('');
   const [issueTitle, setIssueTitle] = useState('');
   const [description, setDescription] = useState('');
+  
+  const detectionResult = React.useMemo(() => detectUrgency(description), [description]);
   
   // File Upload State
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -100,10 +104,12 @@ export default function GetHelpView() {
     const referenceNumber = `ACT-${Math.floor(100000 + Math.random() * 900000)}`;
     const newRequest: SupportRequest = {
       id: `case-${Date.now()}`,
-      urgency,
+      urgency: detectionResult.level,
       firstName,
       lastName,
       email: email || 'anonymous@student.edu',
+      contactNumber,
+      address,
       contactMethod,
       category,
       collegeName,
@@ -120,10 +126,12 @@ export default function GetHelpView() {
 
   const handleResetForm = () => {
     setStep(1);
-    setUrgency('Standard Support');
+    setCategory('Financial (Aid/Fees)');
     setFirstName('');
     setLastName('');
     setEmail('');
+    setContactNumber('');
+    setAddress('');
     setContactMethod('Email');
     setCategory('Financial (Aid/Fees)');
     setCollegeName('');
@@ -183,31 +191,11 @@ export default function GetHelpView() {
                 {/* ðŸ›¡ï¸ STEP 1: PERSONAL INFO */}
                 {step === 1 && (
                   <div className="space-y-6 animate-fade-in">
-                    <div className="space-y-3">
+                    <div className="space-y-1">
                       <h3 className="font-extrabold text-sm sm:text-base text-gray-900 uppercase tracking-wide">
-                        Urgency & Priority Classification
+                        Personal Information
                       </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {[
-                          { label: 'Standard Support', desc: 'Tuition audits, guide questions, general help. Responds in 24 hrs.' },
-                          { label: 'High Priority', desc: 'Disciplinary hearings, grading curve shifts. Responds in 6 hrs.' },
-                          { label: 'Critical / Urgent', desc: 'Immediate dorm eviction, safety threats. Responds in 1-2 hrs.' }
-                        ].map((item) => (
-                          <button
-                            key={item.label}
-                            type="button"
-                            onClick={() => setUrgency(item.label as any)}
-                            className={`p-4 text-left border-2 rounded-xl transition-all cursor-pointer ${
-                              urgency === item.label
-                                ? 'border-indigo-600 bg-indigo-50/20 shadow-sm'
-                                : 'border-gray-100 hover:border-indigo-300 bg-white'
-                            }`}
-                          >
-                            <p className="font-bold text-xs sm:text-sm text-gray-900">{item.label}</p>
-                            <p className="text-[10px] text-gray-400 mt-1 leading-relaxed">{item.desc}</p>
-                          </button>
-                        ))}
-                      </div>
+                      <p className="text-xs text-gray-400 font-medium">Please provide your details so we can reach you securely.</p>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -248,6 +236,34 @@ export default function GetHelpView() {
                         <p className="text-[9px] text-gray-400">Your details are kept isolated in our secure databases.</p>
                       </div>
 
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold uppercase text-gray-400">Contact Number</label>
+                        <input 
+                          type="tel"
+                          required
+                          value={contactNumber}
+                          onChange={(e) => setContactNumber(e.target.value)}
+                          placeholder="(555) 123-4567"
+                          className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold uppercase text-gray-400">Current Address</label>
+                        <input 
+                          type="text"
+                          required
+                          value={address}
+                          onChange={(e) => setAddress(e.target.value)}
+                          placeholder="123 Mystic Falls Ln, Apt 4B"
+                          className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1">
                         <label className="text-xs font-bold uppercase text-gray-400">Preferred Contact Method</label>
                         <select 
@@ -345,6 +361,35 @@ export default function GetHelpView() {
                         rows={5}
                         className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none resize-none"
                       />
+                      {description.length >= 10 && (
+                        <div className={`mt-3 p-3 rounded-xl border flex items-start gap-2 ${
+                          detectionResult.level === 'critical' ? 'bg-red-500/15 border-red-500/40 text-red-400' :
+                          detectionResult.level === 'high' ? 'bg-amber-500/15 border-amber-500/40 text-amber-400' :
+                          'bg-slate-700/40 border-slate-600/40 text-slate-400'
+                        }`}>
+                          <div className="mt-0.5 relative shrink-0">
+                            {detectionResult.level === 'critical' && (
+                              <div className="relative flex items-center justify-center">
+                                <span className="absolute inline-flex h-4 w-4 rounded-full bg-red-500 opacity-75 animate-ping"></span>
+                                <Shield className="w-4 h-4 text-red-500 relative" />
+                              </div>
+                            )}
+                            {detectionResult.level === 'high' && (
+                              <div className="relative flex items-center justify-center">
+                                <span className="absolute inline-flex h-2 w-2 rounded-full bg-amber-500 opacity-75 mr-3"></span>
+                                <AlertTriangle className="w-4 h-4 text-amber-500 relative ml-2" />
+                              </div>
+                            )}
+                            {detectionResult.level === 'standard' && (
+                              <div className="relative flex items-center justify-center">
+                                <span className="inline-flex h-2 w-2 rounded-full bg-slate-400 mr-2"></span>
+                                <Info className="w-4 h-4 text-slate-400 relative" />
+                              </div>
+                            )}
+                          </div>
+                          <span className="text-xs font-bold leading-relaxed">{detectionResult.reason}</span>
+                        </div>
+                      )}
                     </div>
 
                     {/* INTERACTIVE DRAG & DROP FILE UPLOAD CONTAINER */}
@@ -415,7 +460,7 @@ export default function GetHelpView() {
                     <div className="border border-gray-100 rounded-2xl p-5 bg-gray-50/50 space-y-3">
                       <div className="flex justify-between border-b border-gray-100 pb-2">
                         <span className="text-gray-400 uppercase font-bold text-[10px]">Classification:</span>
-                        <strong className="text-gray-900">{urgency}</strong>
+                        <strong className="text-gray-900 uppercase">{detectionResult.level}</strong>
                       </div>
                       <div className="flex justify-between border-b border-gray-100 pb-2">
                         <span className="text-gray-400 uppercase font-bold text-[10px]">Target College:</span>
@@ -430,8 +475,19 @@ export default function GetHelpView() {
                         <strong className="text-gray-900">{firstName} {lastName}</strong>
                       </div>
                       <div className="flex justify-between border-b border-gray-100 pb-2">
-                        <span className="text-gray-400 uppercase font-bold text-[10px]">Contact Method:</span>
-                        <strong className="text-gray-900">{contactMethod} ({email || 'No email provided'})</strong>
+                        <span className="text-gray-400 uppercase font-bold text-[10px]">Contact Info:</span>
+                        <strong className="text-gray-900 text-right">
+                          {contactNumber} <br/>
+                          <span className="text-gray-500 font-medium text-[10px]">{email || 'No email provided'}</span>
+                        </strong>
+                      </div>
+                      <div className="flex justify-between border-b border-gray-100 pb-2">
+                        <span className="text-gray-400 uppercase font-bold text-[10px]">Address:</span>
+                        <strong className="text-gray-900">{address}</strong>
+                      </div>
+                      <div className="flex justify-between border-b border-gray-100 pb-2">
+                        <span className="text-gray-400 uppercase font-bold text-[10px]">Pref. Method:</span>
+                        <strong className="text-gray-900">{contactMethod}</strong>
                       </div>
                       <div className="pt-2">
                         <span className="text-gray-400 uppercase font-bold text-[10px] block mb-1">Details:</span>

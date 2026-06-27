@@ -32,6 +32,15 @@ export interface TransparencyScore {
   total: number; // 0-100
 }
 
+export interface Course {
+  id: string;
+  name: string;
+  approvedTuition: number;
+  reportedTotalAsk: number;
+  placementRate: number;
+  duration?: string;
+}
+
 export interface College {
   id: string;
   name: string;
@@ -40,10 +49,6 @@ export interface College {
   collegeType: string;
   approvalStatus: string;
   logoText: string;
-  approvedTuition: number;
-  reportedTotalAsk: number;
-  tuition: string; // fallback string if needed
-  placementRate: number;
   rating: number;
   image: string;
   tags: string[];
@@ -52,6 +57,7 @@ export interface College {
   capitationReports: number;
   marksheetComplaints: number;
   grievanceOfficerListed: boolean;
+  courses: Course[];
 }
 
 export interface Review {
@@ -68,10 +74,12 @@ export interface Review {
 
 export interface SupportRequest {
   id: string;
-  urgency: 'Standard Support' | 'High Priority' | 'Critical / Urgent';
+  urgency: 'critical' | 'high' | 'standard';
   firstName: string;
   lastName: string;
   email: string;
+  contactNumber?: string;
+  address?: string;
   contactMethod: 'Email' | 'Phone Call' | 'Secure Message';
   category?: string;
   collegeName?: string;
